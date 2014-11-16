@@ -1,0 +1,693 @@
+<html>
+	<!--http://old.worldreviewer.com/crud/iphone/map2.html -->
+	<head>
+		<title>Plano</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta name = "viewport" content = "initial-scale = 1.0, user-scalable = no" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta names="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<link rel="shortcut icon" href="favicon.ico" />
+		<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+		<link rel="apple-touch-startup-image" href="startup.png" />
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<link rel="stylesheet" type="text/css" href="maps.css">
+		<link rel="stylesheet" type="text/css" href="list.css">
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript" src="basic.js"></script>
+		<script type="text/javascript">
+			window.addEventListener(orientationEvent, function() {
+    			navBarFunct();
+
+			}, false);
+
+			var el_map;
+			var el_layer;
+			var zoom = 1 ;
+			var tile_divs = {};
+			var $floor = 0;
+			
+			var $cuadrado;
+			var $rl;
+			var $rt;
+			var $calcZoom;
+			var $cloudDivWidth;
+			var $cloudDivHeight;
+			var $imageWidth;
+			var $imageHeight;
+			var $cloudImgWidth;
+			var $cloudImgHeight;
+			var	$textId;
+
+			function updateProgress(){
+				navBarFunct();
+			}
+			
+			function posLinkMore(){
+				var $windowWidth = window.innerWidth;
+				var $linkMoreWidth = $(".linkMore").width();
+				$(".linkMore").css("left",  $windowWidth-$linkMoreWidth-10+"px");	
+			}
+			
+			function animateOver($a){
+				/*$(".image").animate({"width":"48px","height":"48px"}, "fast");
+				$(".cloudImg").animate({"width":"56px","height":"56px"}, "fast");
+			
+				$("#cloudDiv_"+$a+" > .image").animate({"width":(48*2)+"px","height":(48*2)+"px"}, "fast");
+				$("#cloudDiv_"+$a+" > .cloudImg").animate({"width":(56*2)+"px","height":(56*2)+"px"}, "fast");*/
+			
+				$.ajax({
+					type: "GET",
+					url: "list.xml",
+					dataType: "xml",
+					success: function(xml) {
+						$(xml).find('channel').each(function(){
+							var $title = $(this).find('item').eq($a).find('title').text();
+							var $image = $(this).find('item').eq($a).find('clave').text();
+							var $autor = $(this).find('item').eq($a).find('autor').text();
+							var $room = $(this).find('item').eq($a).find('room').text();
+							
+							$("<div class='obra' onclick='envio("+$a+")'></div>").appendTo("#layerData");
+							$("<img class='linkMore' src='image/imageMore.png' />").appendTo(".obra");
+							$("<img class='image' src='picture/"+$image+"_preview.jpg' />").appendTo(".obra");
+							$("<p class='title'></p>").html($title).appendTo(".obra");
+							$("<p class='autor'></p>").html($autor).appendTo(".obra");
+							$("<div class='clear'></div>").appendTo(".obra");
+
+							$(".obra").animate({"top": "-=85px"}, "fast");
+
+							posLinkMore();
+						})
+					}
+				})
+				
+				
+				$(".obra:first").animate({"top": "+=85px"}, "fast", function(){$(this).remove();});
+			}
+			
+			function reparPicture($a)
+			{
+				var $widthImage = $(".cloudImg").width();
+				var $heightImage = $(".cloudImg").height();
+				var $widthTextId = $(".textId").width();
+				var $heightTextId = $(".textId").height();
+				
+				var $recuadroSize = $(".recuadro").size();
+				for (var $a = 0; $a <= $recuadroSize; $a++){
+				
+					var $heightRecuadro = $(".recuadro").eq($a).height();
+					var $widthRecuadro = $(".recuadro").eq($a).width();
+					$(".recuadro:eq("+$a+") .textId").css({"width": $widthRecuadro+"px"});
+					var cloudDivSize = $(".recuadro").eq($a).children().size();
+					
+					if(cloudDivSize == 1){
+						$(".recuadro:eq("+$a+") .textId").css("left", parseInt(($widthRecuadro/2)-($widthTextId/2))+"px");
+						$(".recuadro:eq("+$a+") .textId").css("top",  parseInt(($heightRecuadro/2)-($heightTextId/2))+"px");
+					
+					}else if(cloudDivSize == 2){
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("left", parseInt(($widthRecuadro/2)-($widthImage/2))+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("top",  parseInt(($heightRecuadro/2)-($heightImage/2))-($heightImage/3)+"px");
+						$(".recuadro:eq("+$a+") .textId").css("left", parseInt(($widthRecuadro/2)-($widthTextId/2))+"px");
+						$(".recuadro:eq("+$a+") .textId").css("top",  parseInt(($heightRecuadro/2)-($heightTextId/2))-($heightTextId*2)+"px");
+					}else if(cloudDivSize ==3){
+						if($widthRecuadro > $heightRecuadro){
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("top",($heightImage/10)+"px");	
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("left", parseInt(($widthRecuadro/4)-($widthImage/2))+"px");
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(1)").css("top",parseInt(-$heightImage+($heightRecuadro/2)-($widthImage/2))+"px");
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(1)").css("left",parseInt((($widthRecuadro/4)*3)-($widthImage/2))+"px");
+						}else if($heightRecuadro > $widthRecuadro){
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("top",($heightImage/10)+"px");	
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(1)").css("top",parseInt(-$heightImage+($heightRecuadro)-$heightImage)-($heightImage/10)+"px");	
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("left", parseInt(($widthRecuadro/2)-($widthImage/2))+($widthImage/5)+"px");
+							$(".recuadro:eq("+$a+") .cloudDiv:eq(1)").css("left", parseInt(($widthRecuadro/2)-($widthImage/2))-($widthImage/5)+"px");
+						}
+					}else if(cloudDivSize == 4){		
+					}else if(cloudDivSize == 5){
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("top",($heightImage/10)+"px");	
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(0)").css("left", parseInt(($widthRecuadro/4)-($widthImage/2))+($widthImage/5)+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(1)").css("top",-($heightImage-($heightImage/10))+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(1)").css("left",parseInt((($widthRecuadro/4)*3)-($widthImage/2))-($widthImage/5)+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(2)").css("top","-"+(($heightImage*2)-($heightRecuadro-$heightImage)+($heightImage/10))+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(2)").css("left",parseInt((($widthRecuadro/4))-($widthImage/2))+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(3)").css("top",parseInt(-($heightImage*3)+($heightRecuadro)-$heightImage-($heightImage/10))+"px");
+						$(".recuadro:eq("+$a+") .cloudDiv:eq(3)").css("left",parseInt((($widthRecuadro/4)*3)-($widthImage/2))+"px");
+					}
+				}
+			}
+			
+			function updateForma(zv){
+				var $roomSize = $(".recuadro").size();
+				var $windowWidth = window.innerWidth;
+				var $windowHeight = window.innerHeight;
+
+				if(zv == "-1"){
+					
+					$layerLeft = $("#layer").offset().left;
+					$layerTop = $("#layer").offset().top;
+					
+					var $mLeft =($layerLeft-($windowWidth*2))-(-$calcZoom);
+					var $mTop =($layerTop-($windowHeight*2))-(-$calcZoom);
+				
+					$cuadrado = $cuadrado*2;
+					$calcZoom = $calcZoom*2;
+					
+					$cloudDivWidth = $cloudDivWidth*2;
+					$cloudDivHeight = $cloudDivHeight*2;
+					
+					$imageWidth = $imageWidth*2;
+					$imageHeight = $imageHeight*2;
+					
+					$cloudImgWidth = $cloudImgWidth*2;
+					$cloudImgHeight = $cloudImgHeight*2;
+					$textId = $textId*2;
+					for (var $a = 0; $a < $roomSize; $a++){
+						var $recuadroLeft = $(".recuadro").eq($a).offset().left;
+						var $recuadroTop = $(".recuadro").eq($a).offset().top;
+						$rl = $recuadroLeft*2;
+						$rt = $recuadroTop*2;
+						
+						var $recuadroWidth = $(".recuadro").eq($a).width();
+						var $recuadroHeight = $(".recuadro").eq($a).height();
+						$rw = $recuadroWidth*2;
+						$rh = $recuadroHeight*2;
+						
+						$recuTop = $calcZoom + $rt;
+						$recuLeft = $calcZoom + $rl;
+					
+						$(".recuadro").eq($a).css({"top": ($recuTop-($windowHeight*4)-($mTop*2))+"px", "left": ($recuLeft-($windowWidth*4)-($mLeft*2))+"px"});
+						$(".recuadro").eq($a).css({"height": $rh+"px", "width": $rw+"px"});
+					}
+				}else if(zv == "1"){
+
+					$layerLeft = $("#layer").offset().left;
+					$layerTop = $("#layer").offset().top;
+					
+					var $mLeft =($layerLeft-($windowWidth/2))-(-$calcZoom);
+					var $mTop =($layerTop-($windowHeight/2))-(-$calcZoom);
+
+					$cuadrado = $cuadrado/2;
+					$calcZoom = $calcZoom/2;
+					
+					$cloudDivWidth = $cloudDivWidth/2;
+					$cloudDivHeight = $cloudDivHeight/2;
+					
+					$imageWidth = $imageWidth/2;
+					$imageHeight = $imageHeight/2;
+					
+					$cloudImgWidth = $cloudImgWidth/2;
+					$cloudImgHeight = $cloudImgHeight/2;
+					$textId = $textId/2;
+					for (var $a = 0; $a < $roomSize; $a++){
+
+						$recuadroLeft = $(".recuadro").eq($a).offset().left;
+						$recuadroTop = $(".recuadro").eq($a).offset().top;
+						
+						$rl = $recuadroLeft/2;
+						$rt = $recuadroTop/2;
+						
+						var $recuadroWidth = $(".recuadro").eq($a).width();
+						var $recuadroHeight = $(".recuadro").eq($a).height();
+						$rw = $recuadroWidth/2;
+						$rh = $recuadroHeight/2;
+
+						$recuTop = $calcZoom + $rt;
+						$recuLeft = $calcZoom + $rl;
+						
+						$(".recuadro").eq($a).css({"top": ($recuTop-($windowHeight/4)-($mTop/2))+"px", "left": ($recuLeft-($windowWidth/4)-($mLeft/2))+"px"});
+						$(".recuadro").eq($a).css({"height": $rh+"px", "width": $rw+"px"});
+						
+					}
+				}else{
+					$cuadrado = 256;
+					$calcZoom = ($cuadrado * $cuadrado);
+					
+					/*$cloudDivWidth = $(".cloudDiv").width();
+					$cloudDivHeight = $(".cloudDiv").height();
+					$imageWidth = $(".image").width();
+					$imageHeight = $(".image").height();
+					$cloudImgWidth = $(".cloudImg").width();
+					$cloudImgHeight = $(".cloudImg").height();*/
+					
+					$cloudDivWidth = 56;
+					$cloudDivHeight = 56;
+					$imageWidth = 48;
+					$imageHeight = 48;
+					$cloudImgWidth = 56;
+					$cloudImgHeight = 56;
+					$textId = 20;
+					
+					for (var $a = 0; $a < $roomSize; $a++){
+
+						var $recuadroLeft = $(".recuadro").eq($a).offset().left;
+						var $recuadroTop = $(".recuadro").eq($a).offset().top;
+						
+						$rl = $recuadroLeft;
+						$rt = $recuadroTop;
+						
+						var $recuadroWidth = $(".recuadro").eq($a).width();
+						var $recuadroHeight = $(".recuadro").eq($a).height();
+						$rw = $recuadroWidth;
+						$rh = $recuadroHeight;
+						
+						$rt = $calcZoom + $rt;
+						$rl = $calcZoom + $rl;
+					
+						$(".recuadro").eq($a).css({"top": $rt+"px", "left": $rl+"px"});
+						$(".recuadro").eq($a).css({"height": $rh+"px", "width": $rw+"px"});
+						
+					}
+				}
+
+				setTimeout("reparPicture()", 200);
+				$(".textId").css("font-size",$textId+"px");
+				$(".cloudDiv").css({"height": $cloudDivHeight+"px", "width": $cloudDivWidth+"px"});
+				$(".image").css({"height": $imageHeight+"px", "width": $imageWidth+"px", "margin-left":-($imageWidth/2)+"px", "margin-top":-($imageHeight/2)+"px"});
+				$(".cloudImg").css({"height": $cloudImgHeight+"px", "width": $cloudImgWidth+"px"});
+				
+				if($roomSize == 1){
+					setPosition(-$rl-($rw/2), -$rt-($rh/2));
+				}else{
+					setPosition(-$calcZoom, -$calcZoom);
+				}
+				return $calcZoom, $cuadrado, $rt, $rl, $rw, $rh, $cloudDivWidth, $cloudDivHeight, $imageWidth, $imageHeight, $cloudImgWidth, $cloudImgHeight, $textId;
+			}
+			
+			$(document).ready(function(){
+
+				$("#navBar").css({"position":"absolute", "z-index":"2"});
+			
+				var $varUrl = String(window.location.search);
+				var $varRuta = $varUrl.substr(1,($varUrl.indexOf("=")-1));
+
+				el_map = document.getElementById('map');
+				el_layer = document.getElementById('layer');
+				
+				var $room = [["100","101","102"],["47","49","50","51","51a","51b","51c","52a","52b","52c","55","55a","55b","56","56a","56b","57","57a","57b","58","58a","60","60a","61","61a","61b","62","62a","62b","63","63a","63b","64","65","66","67","71","72","73","74","75"],["1","2","3","4","5","6","7","7a","8","8a","8b","9","9a","9b","10","10a","11","10b","12","14","15","15a","16","16a","16b","17","17a","18","18a","19","20","21","22","23","24","25","26","27","28","29","32","34","35","36","37","38","39","40","41","42","43","44"],["85","86","87","88","89","90","91","92","93","94"]];
+	
+				var $pinturaEspanola = ["8a","9a","10","10a","11","12","14","15","15a","16","16a","17","17a","18","18a","25","26","27","28","29","32","34","35","36","37","38","50","51","51a","51b","51c","52a","52b","52c","56","60","60a","61","61a","61b","62","62a","62b","63","63a","63b","64","65","66","67","75","85","86","87","88","89","90","91","92","93","94"];
+				var $pinturaAlemana = ["20","55b"];
+				var $pinturaFrancesa = ["2","3","19","39"];
+				var $pinturaFlamenca = ["7","8","8b","9","9b","10b","24","55","55a","56a","57","57a","57b","58","58a"];
+				var $pinturaItaliana = ["4","5","6","22","23","40","41","42","43","44","49","56b"];
+				var $pinturaBritanica = ["21"];
+				var $pinturaHolandesa = ["7a"];
+				var $artesDecorativas = ["100","101","102"];
+				var $escultura = ["47","71","72","73","74"];
+				
+				var $roomStyle = [$pinturaEspanola, $pinturaAlemana, $pinturaFrancesa, $pinturaFlamenca, $pinturaItaliana, $pinturaBritanica, $pinturaHolandesa, $artesDecorativas, $escultura];
+				
+				if($varRuta=="floor"){
+					$plantaId = $varUrl.substr($varUrl.indexOf("=")+1,2);
+					$("<div id='title'><p>Planta "+$floor+"</p></div>").appendTo("#titleSimple");
+					
+					if($plantaId == 0) $floor = -1;
+					if($plantaId == 1) $floor = 0;
+					if($plantaId == 2) $floor = 1;	
+					if($plantaId == 3) $floor = 2;	
+					
+					var $roomSize = $($room[$plantaId]).size();
+					for (var $c = 0; $c < $roomSize; $c++){
+						$("<div class='recuadro' id='salaPlano"+$room[$plantaId][$c]+"'</div>").appendTo("#layer");
+					}
+
+					$.ajax({
+						type: "GET",
+						url: "list.xml",
+						dataType: "xml",
+						success: function(xml) {
+							$(xml).find('channel').each(function(){
+							
+								for (var $c = 0; $c < $roomSize; $c++){
+									var $roomId = $room[$plantaId][$c].toLowerCase();
+
+									var $idItem = $(this).find("item room").filter(function() {
+										return $(this).text().toLowerCase() == $roomId;
+									}).parent().size();
+									
+									for (var $b = 0; $b < $idItem; $b++){
+
+										var $clave = $(this).find("item room").filter(function() {
+											return $(this).text().toLowerCase() == $roomId;
+										}).parent("item:eq("+$b+")").find("clave").text();
+										
+										var $obraId = $(this).find("item clave:contains('"+$clave+"')").parent("item").index();
+									
+										$("<div class='cloudDiv' id='cloudDiv_"+$obraId+"' ontouchend='animateOver("+$obraId+")' onclick='animateOver("+$obraId+")'><img class='image' src='picture/"+$clave+"_preview.jpg' /><img class='cloudImg' src='image/cuadroFlotante.png' /></div>").appendTo(".recuadro:eq("+$c+")");
+									}
+									
+									$("<p class='textId'></p>").text($roomId).appendTo("#salaPlano"+$roomId);
+								}
+							});
+						}
+					});
+				}else if($varRuta=="roomId"){
+					$roomId = $varUrl.substr($varUrl.indexOf("=")+1,4);
+					$("<div id='title'><p>Sala "+$roomId+"</p></div>").appendTo("#titleSimple");
+					
+					$roomIdDecimal = $roomId.substring(3,-4);
+					if($roomIdDecimal <= 44) $floor = 1;
+					if($roomIdDecimal >= 47 && $roomIdDecimal <= 75) $floor = 0;
+					if($roomIdDecimal >= 85 && $roomIdDecimal <= 94) $floor = 2;
+					if($roomIdDecimal >= 100 && $roomIdDecimal <= 102) $floor = -1;
+					
+					$("<div class='recuadro' id='salaPlano"+$roomId+"'></div>").appendTo("#layer");
+					
+					$.ajax({
+						type: "GET",
+						url: "list.xml",
+						dataType: "xml",
+						success: function(xml) {
+							$(xml).find('channel').each(function(){
+								var $idItem = $(this).find("item room").filter(function() {
+									return $(this).text().toLowerCase() == $roomId;
+								}).parent().size();
+								for (var $a = 0; $a < $idItem; $a++){
+									var $room = $(this).find("item room").filter(function() {
+										return $(this).text().toLowerCase() == $roomId;
+									}).parent("item:eq("+$a+")").index();
+									var $clave = $(this).find("item room:contains('"+$roomId+"')").parent("item:eq("+$a+")").find("clave").text();
+									$("<div class='cloudDiv' id='cloudDiv_"+$room+"' ontouchend='animateOver("+$room+")' onclick='animateOver("+$room+")'><img class='image room_"+$roomId+"' src='picture/"+$clave+"_preview.jpg' /><img class='cloudImg' src='image/cuadroFlotante.png' /></div>").appendTo("#salaPlano"+$roomId);
+								}
+							});	
+						}
+					});
+				}
+				
+				for(var $w = 0; $w < $($roomStyle[0]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[0][$w]).css("background-color","#742d41");
+				}
+				for(var $w = 0; $w < $($roomStyle[1]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[1][$w]).css("background-color","#458081");
+				}
+				for(var $w = 0; $w < $($roomStyle[2]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[2][$w]).css("background-color","#382e74");
+				}
+				for(var $w = 0; $w < $($roomStyle[3]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[3][$w]).css("background-color","#f8ca50");
+				}
+				for(var $w = 0; $w < $($roomStyle[4]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[4][$w]).css("background-color","#f7a885");
+				}
+				for(var $w = 0; $w < $($roomStyle[5]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[5][$w]).css("background-color","#7e9930");
+				}
+				for(var $w = 0; $w < $($roomStyle[6]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[6][$w]).css("background-color","#c0b4a1");
+				}
+				for(var $w = 0; $w < $($roomStyle[7]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[7][$w]).css("background-color","#b90613");
+				}
+				for(var $w = 0; $w < $($roomStyle[8]).size() ; $w++){
+					$("#salaPlano"+$roomStyle[8][$w]).css("background-color","#bdb39f");
+				}
+				
+				
+				updateForma();
+				addTileDivs();
+				checkDivs();
+			});
+
+			function getTileSize(zoom){
+				return Math.pow(2,10-zoom);
+			}
+
+			function addTileDivs(){
+				var w = el_map.parentNode.clientWidth;
+				var h = el_map.parentNode.clientHeight;
+	
+				var tx = Math.ceil(w/256);
+				var ty = Math.ceil(h/256);
+				for(var i=-tx; i<tx;i++){
+					for(var j=-ty; j<ty;j++){
+						addDiv(i,j);
+					}
+				}
+			}
+
+			function setZoom(nzoom){
+				var pos = getCenterPoint();
+
+				zoom = nzoom;
+	
+				for(ij in tile_divs){
+					ij = ij.split(',');
+		
+					updateDiv(parseInt(ij[0]),parseInt(ij[1]),zoom);
+				}
+				updateForma(nzoom);
+				setCenterPoint(pos[0], pos[1]);
+				checkDivs();
+			}
+
+			function changeZoom(zv){
+				var pos = getCenterPoint();
+
+				zoom += zv;
+	
+				for(ij in tile_divs){
+					ij = ij.split(',');
+		
+					updateDiv(parseInt(ij[0]),parseInt(ij[1]),zoom);
+				}
+				updateForma(zv);
+				setCenterPoint(pos[0], pos[1]);
+				checkDivs();
+			}
+
+			function getCenterSquare(){
+				return [-Math.floor(sx/256),-Math.floor(sy/256)];
+			}
+
+			function getCenterPoint(){
+				var cx = -sx;
+				var cy = -sy;
+	
+				var sc = Math.pow(2, zoom);
+	
+				cx = cx * sc;
+				cy = cy * sc;
+	
+				return [cx, cy];
+			}
+
+			function setCenterPoint(x,y){
+				var sc = Math.pow(2, zoom);
+	
+				var sx = -x/sc;
+				var sy = -y/sc;
+	
+				setPosition(sx, sy);
+			}
+
+			function checkDivs(){
+				var w = el_map.parentNode.clientWidth;
+				var h = el_map.parentNode.clientHeight;
+	
+				var tx = Math.ceil(w/256);
+				var ty = Math.ceil(h/256);
+	
+				var csxy = getCenterSquare();
+	
+				for(var i=csxy[0]-tx; i<csxy[0]+tx;i++){
+					for(var j=csxy[1]-ty; j<csxy[1]+ty;j++){
+						if (typeof tile_divs[[i,j]] == 'undefined') addDiv(i,j);
+					}
+				}
+	
+				for(ijt in tile_divs){
+					ij = ijt.split(',');
+		
+					var d = Math.sqrt(Math.pow(ij[0]-csxy[0],2) + Math.pow(ij[1]-csxy[1],2));
+					if (d > 5) removeDiv(ijt);
+				}
+	
+				var c =0;
+				for(ijt in tile_divs) c++;
+
+			}
+
+			function removeDiv(ij){
+				var el = tile_divs[ij];
+				el_layer.removeChild(el);
+				delete tile_divs[ij];
+			}
+			
+
+			function updateDiv(i,j,zoom){
+			
+				var $validate = true;
+				
+				var el = tile_divs[i+','+j];
+
+				var gxy = getGoogleTitleXY(i,j,zoom);
+				
+				
+				
+				$(el).css('background-image','url(image/maps/'+$floor+'/z'+zoom+'/x'+gxy[0]+'_y'+gxy[1]+'_s1.png)');
+				//el.style.background = 'url(image/maps/'+$floor+'/z'+zoom+'/x'+gxy[0]+'_y'+gxy[1]+'_s1.png)';
+				
+				//el.src = "image/maps/"+$floor+"/z"+zoom+"/x"+gxy[0]+"_y"+gxy[1]+"_s1.png";
+				
+				$("img").error(function(){
+ 					$(this).attr("src","image/pixel.png");
+				});
+				
+				//el.innerHTML = gxy[0]+", "+gxy[1];
+				
+			}
+
+
+			function addDiv(i,j){
+				var scale = 1;
+				var s = 256*scale;
+				var x = (i*256)*scale;
+				var y = (j*256)*scale;
+	
+				var el = document.createElement('div');
+				el.className = 'tile';
+				el.style.top = y+'px';
+				el.style.left = x+'px';
+				
+				el_layer.appendChild(el);
+
+				tile_divs[i+','+j] = el;
+	
+				updateDiv(i,j, zoom);
+			}
+
+
+			function getGoogleTitleXY(i,j,zoom){	
+				var ts = getTileSize(zoom);	
+				var tc = ts/2;
+	
+				var gi = (i+tc) % ts;
+				var gj = (j+tc) % ts;
+	
+				if (gi<0) gi+=ts;
+				if (gj<0) gj+=ts;
+	
+				return [gi, gj, 7+zoom];
+			}
+
+			function transform(x,y){
+   				var w = el_map.parentNode.clientWidth;
+				var h = el_map.parentNode.clientHeight;
+	
+				return [(x+w/2), (y+h/2)];
+			}
+
+			function setPosition(x,y){
+				var pos = transform(x,y);
+	
+				sx = x;
+				sy = y;
+	
+				el_layer.style.left = pos[0]+'px';
+				el_layer.style.top = pos[1]+'px';
+				
+			}
+
+
+			var md = false;
+			var cx = null;
+			var cy = null;	
+			var sx = 0;
+			var sy = 0;
+	
+			function mouseDown(event){
+				cx= event.pageX;
+    			cy = event.pageY;
+	
+				md = true;
+			}	
+
+			function mouseUp(event){
+				md = false;
+	
+				checkDivs();
+			}
+
+			function mouseMove(event){
+				if (!md) return;
+				
+				var curX = event.pageX;
+   				var curY = event.pageY;
+    
+				var vx = curX -cx;
+				var vy = curY-cy;
+						
+				sx += vx;
+				sy += vy;
+
+				cx = curX;
+				cy = curY;
+	
+				setPosition(sx, sy);
+			}
+
+
+			function touchMove(event){
+				event.preventDefault(); 
+				if(event.touches.length == 1){ 
+					var event = event.touches[0]; 
+					mouseMove(event);
+				}
+			}
+
+			function touchDown(event){
+				event.preventDefault(); 
+	
+				if(event.touches.length == 1){ 
+	
+					var event = event.touches[0]; 
+					mouseDown(event);
+				}
+			}
+
+			function touchUp(event){
+				mouseUp(event);
+			}
+	
+			var start_zoom = null;
+			
+			function gestureStart(event){
+   				var scale = event.scale;
+			}
+	
+			function gestureChange(event){
+				event.preventDefault(); 
+				var eScale = event.scale;
+				$("#map").css("-webkit-transform","scale("+eScale+")");
+			}
+			
+			function gestureEnd(event){
+				$("#map").css("-webkit-transform","scale(1)");
+				if(event.scale < 1){
+					changeZoom(1);
+				}else if(event.scale > 1){
+					changeZoom(-1); 
+				}
+				
+				
+			}
+		</script>
+	</head>
+	<body ontouchmove="touchMove(event);">
+		<div id="navBar">
+			<button id="bBack" class="buttonBack" type="button" ontouchend="history.go(-1);" onclick="history.go(-1)">Volver</button>
+			<button id="bList" class="button" type="button" ontouchend="javascript:goList();" onclick="javascript:goList()"><img src="image/barra-boton-lista.png"/></button>
+			<button id="bSearch" class="button" type="button" ontouchend="javascript:goSearch();" onclick="javascript:goSearch();"><img src="image/barra-boton-buscar.png"/></button>
+			<div id="titleSimple">
+			</div>
+		</div>
+		<div id="content">
+			<div id="map">
+				<div id="layer" ongestureend="gestureEnd(event);" ongesturestart="gestureStart(event);" ongesturechange="gestureChange(event);" ontouchmove="touchMove(event);" ontouchstart="touchDown(event);" ontouchend="touchUp(event);" onmousedown="mouseDown(event);" onmousemove="mouseMove(event);" onmouseup="mouseUp(event);"></div>
+			</div>
+			<div id="layerData"></div>
+				<div id="botones">
+				<button onclick="changeZoom(-1)">Zoom In</button>
+				<button onclick="changeZoom(1)">Zoom Out</button>
+			</div>
+		</div>
+	</body>
+</html> 

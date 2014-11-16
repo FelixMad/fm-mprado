@@ -1,0 +1,59 @@
+.numero{
+	text-shadow: rgba(0, 0, 0, 0.4) 0px -1px 0;
+	font-size: 24px;
+	line-height: 24px;
+    font-weight: bold;
+	color: #999;
+	width:42px;
+	text-align: right;
+	float: left;
+	display: block;
+	margin-right: 10px;
+}
+.linkMore{
+	margin-top:20px;
+	width:24px;
+	height:24px;
+	-webkit-box-shadow: 0px 1px 4px black;
+	-webkit-border-radius: 12px;
+	position:absolute;
+}
+ARTICLE{
+	padding:10px;
+	border-bottom: 1px solid #999;
+	width: 100%;
+	clear: both;
+	display: block;
+}
+
+.obraPlano IMG{
+	width:64px;
+	height:64px;
+}
+ARTICLE .image{
+	margin-right:10px;
+	float: left;
+	width:64px;
+	height:64px;
+}
+H2{
+	margin-right:40px;
+	font-weight: bold;
+	font-size: 16px;
+	line-height: 18px;
+}
+.autor{
+	font-size: 14px;
+	line-height: 18px;
+    font-weight: italic;
+	color: #666;
+}
+HR{
+	clear: both; display: none;
+}
+
+section{
+	z-index: 0; 
+	position:relative; 
+	overflow: hidden;
+}

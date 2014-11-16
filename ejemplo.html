@@ -1,0 +1,62 @@
+<html>
+<head>
+	<script type='text/javascript' src='js/jquery.js'></script>
+	<script type='text/javascript' src='js/sortElements.js'></script>
+	<script>
+	$(document).ready(function(){
+		$('li').sortElements(function(a, b){
+			return $(a).text() > $(b).text() ? 1 : -1;
+		});	
+	});	
+	</script>
+</head>
+<body>
+<ul>
+<li>56b</li>
+<li>56b</li>
+<li>56b</li>
+<li>58</li>
+<li>56a</li>
+<li>56a</li>
+<li>56a</li>
+<li>6a</li>
+<li>55b</li>
+<li>55b</li>
+<li>49</li>
+<li>42</li>
+<li>24</li>
+<li>42</li>
+<li>44</li>
+<li>41</li>
+<li>10a</li>
+<li>9a</li>
+<li>10a</li>
+<li>5</li>
+<li>25</li>
+<li>18</li>
+<li>18</li>
+<li>10</li>
+<li>27</li>
+<li>15</li>
+<li>12</li>
+<li>15a</li>
+<li>28</li>
+<li>9</li>
+<li>10b</li>
+<li>7a</li>
+<li>23</li>
+<li>85</li>
+<li>36</li>
+<li>32</li>
+<li>64</li>
+<li>67</li>
+<li>61b</li>
+<li>60a</li>
+<li>71</li>
+<li>101</li>
+<li>52a</li>
+<li>16</li>
+<li>56b</li>
+</ul>
+</body>
+</html>
